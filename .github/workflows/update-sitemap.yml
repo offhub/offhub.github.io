@@ -14,24 +14,66 @@ jobs:
       - name: Checkout target repo
         uses: actions/checkout@v4
 
-      - name: Fetch sitemap files
+      - name: Fetch new sitemap files
         run: |
           SOURCE_REPO="sandboxie-plus/sandboxie-docs"
           SOURCE_BRANCH="gh-pages"
           
           # Download sitemap files with error handling
-          if ! curl -sfL "https://raw.githubusercontent.com/${SOURCE_REPO}/${SOURCE_BRANCH}/sitemap.xml" -o sitemap.xml; then
+          if ! curl -sfL "https://raw.githubusercontent.com/${SOURCE_REPO}/${SOURCE_BRANCH}/sitemap.xml" -o new_sitemap.xml; then
             echo "❌ Failed to download sitemap.xml"
             exit 1
           fi
           
-          if ! curl -sfL "https://raw.githubusercontent.com/${SOURCE_REPO}/${SOURCE_BRANCH}/sitemap.xml.gz" -o sitemap.xml.gz; then
+          if ! curl -sfL "https://raw.githubusercontent.com/${SOURCE_REPO}/${SOURCE_BRANCH}/sitemap.xml.gz" -o new_sitemap.xml.gz; then
             echo "❌ Failed to download sitemap.xml.gz"
             exit 1
           fi
 
+      - name: Compare and update sitemap files
+        run: |
+          # Check if files exist in repo
+          if [ -f sitemap.xml ] && [ -f sitemap.xml.gz ]; then
+            # Compare XML files
+            if cmp -s sitemap.xml new_sitemap.xml; then
+              echo "✅ sitemap.xml unchanged - no update needed"
+              XML_CHANGED=false
+            else
+              echo "🔄 sitemap.xml has changed - updating"
+              XML_CHANGED=true
+            fi
+            
+            # Compare GZ files
+            if cmp -s sitemap.xml.gz new_sitemap.xml.gz; then
+              echo "✅ sitemap.xml.gz unchanged - no update needed"
+              GZ_CHANGED=false
+            else
+              echo "🔄 sitemap.xml.gz has changed - updating"
+              GZ_CHANGED=true
+            fi
+            
+            # Only proceed if either file changed
+            if [ "$XML_CHANGED" = false ] && [ "$GZ_CHANGED" = false ]; then
+              echo "⏩ Both files unchanged - skipping commit"
+              echo "SKIP_COMMIT=true" >> $GITHUB_ENV
+              exit 0
+            fi
+            
+            # Replace old files with new ones if changed
+            if [ "$XML_CHANGED" = true ]; then
+              mv new_sitemap.xml sitemap.xml
+            fi
+            if [ "$GZ_CHANGED" = true ]; then
+              mv new_sitemap.xml.gz sitemap.xml.gz
+            fi
+          else
+            echo "🆕 Sitemap files don't exist in repo - adding new files"
+            mv new_sitemap.xml sitemap.xml
+            mv new_sitemap.xml.gz sitemap.xml.gz
+          fi
+
       - name: Push changes
-        if: ${{ !cancelled() && !failure() }}
+        if: ${{ !cancelled() && !failure() && env.SKIP_COMMIT != 'true' }}
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
