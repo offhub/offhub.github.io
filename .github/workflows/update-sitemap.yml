@@ -16,7 +16,7 @@ jobs:
 
       - name: Fetch new sitemap files
         run: |
-          SOURCE_REPO="sandboxie-plus/sandboxie-docs"
+          SOURCE_REPO="offhub/sandboxie-docs-test"
           SOURCE_BRANCH="gh-pages"
           
           # Download sitemap files with error handling
