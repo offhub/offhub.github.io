@@ -1,0 +1,29 @@
+name: Update Sitemap Daily
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs at 00:00 UTC daily
+  workflow_dispatch:      # Allow manual triggers
+
+jobs:
+  update-sitemap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Copy sitemap files to root
+        run: |
+          # Copy both sitemap.xml and sitemap.xml.gz
+          cp sandboxie-docs/sitemap.xml ./
+          cp sandboxie-docs/sitemap.xml.gz ./
+
+      - name: Commit and push if changes exist
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add sitemap.xml sitemap.xml.gz
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update sitemap files [skip ci]"
+          git push
