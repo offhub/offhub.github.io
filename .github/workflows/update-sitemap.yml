@@ -20,12 +20,12 @@ jobs:
           SOURCE_BRANCH="gh-pages"
           
           # Download sitemap files with error handling
-          if ! curl -sfL "https://raw.githubusercontent.com/${SOURCE_REPO}/${SOURCE_BRANCH}/sitemap2.xml" -o sitemap.xml; then
+          if ! curl -sfL "https://raw.githubusercontent.com/${SOURCE_REPO}/${SOURCE_BRANCH}/sitemap.xml" -o sitemap.xml; then
             echo "❌ Failed to download sitemap.xml"
             exit 1
           fi
           
-          if ! curl -sfL "https://raw.githubusercontent.com/${SOURCE_REPO}/${SOURCE_BRANCH}/sitemap2.xml.gz" -o sitemap.xml.gz; then
+          if ! curl -sfL "https://raw.githubusercontent.com/${SOURCE_REPO}/${SOURCE_BRANCH}/sitemap.xml.gz" -o sitemap.xml.gz; then
             echo "❌ Failed to download sitemap.xml.gz"
             exit 1
           fi
